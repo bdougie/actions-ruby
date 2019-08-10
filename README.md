@@ -6,30 +6,30 @@ This Action for [rubygems](https://rubygems.org/) enables arbitrary actions with
 
 An example workflow to build and publish a gem to the default public registry follows:
 
-```hcl
-workflow "Build, Test, and Publish" {
-  on = "push"
-  resolves = ["Publish"]
-}
+```yml
+on: push
+name: Build, Test, and Publish
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Build
+      uses: scarhand/actions-ruby@master
+      with:
+        args: build *.gemspec
+    - name: Tag
+      uses: actions/bin/filter@master
+      with:
+        args: tag v*
+    - name: Publish
+      uses: scarhand/actions-ruby@master
+      env:
+        RUBYGEMS_AUTH_TOKEN: ${{ secrets.RUBYGEMS_AUTH_TOKEN }}
+      with:
+        args: push *.gem
 
-action "Build" {
-  uses = "scarhand/actions-ruby@master"
-  args = "build *.gemspec"
-}
-
-# Filter for a new tag
-action "Tag" {
-  needs = "Build"
-  uses = "actions/bin/filter@master"
-  args = "tag v*"
-}
-
-action "Publish" {
-  needs = "Tag"
-  uses = "scarhand/actions-ruby@master"
-  args = "push *.gem"
-  secrets = ["RUBYGEMS_AUTH_TOKEN"]
-}
 ```
 
 ### Secrets
@@ -44,15 +44,22 @@ action "Publish" {
 
 To authenticate with, and publish to, a registry other than `https://rubygems.org`:
 
-```hcl
-action "Publish" {
-  uses = "scarhand/actions-ruby@master"
-  args = "push *.gem"
-  env = {
-    RUBYGEMS_HOST = "https://someOtherRepository.someDomain.net"
-  }
-  secrets = ["RUBYGEMS_AUTH_TOKEN"]
-}
+```yml
+on: push
+name: Build, Test, and Publish
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Publish
+      uses: scarhand/actions-ruby@master
+      env:
+        RUBYGEMS_AUTH_TOKEN: ${{ secrets.RUBYGEMS_AUTH_TOKEN }}
+        RUBYGEMS_HOST: https://someOtherRepository.someDomain.net
+      with:
+        args: push *.gem
 ```
 
 ## License
